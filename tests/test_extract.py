@@ -13,6 +13,9 @@ from app.schemas import GeminiReceipt
 client = TestClient(app)
 H = {"X-Internal-Key": "test-key"}
 PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 50
+# Solo la firma inicial: SOI + marcador JFIF o EXIF
+JFIF = b"\xff\xd8\xff\xe0" + b"0" * 50
+EXIF = b"\xff\xd8\xff\xe1" + b"0" * 50
 
 
 def fake(receipt: GeminiReceipt):
@@ -37,6 +40,21 @@ def test_ok_normalizes(monkeypatch):
     assert body["moneda"] == "COP"
     assert body["referencia"] == "M123456"
     assert body["requiere_revision"] is False
+
+
+@pytest.mark.parametrize("data", [JFIF, EXIF], ids=["jfif", "exif"])
+@pytest.mark.parametrize("filename", ["a.jpg", "a.jpeg", "A.JPEG"])
+def test_accepts_jpeg(monkeypatch, data, filename):
+    received = []
+
+    async def _f(content, mime):
+        received.append((content, mime))
+        return GeminiReceipt(es_comprobante=True, monto=50000, confianza=0.9)
+
+    monkeypatch.setattr(extractor, "_call_gemini", _f)
+    r = client.post("/extract", headers=H, files={"file": (filename, data, "image/jpeg")})
+    assert r.status_code == 200
+    assert received == [(data, "image/jpeg")]
 
 
 def test_missing_fields_need_review(monkeypatch):
