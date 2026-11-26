@@ -1,0 +1,10 @@
+.vscode
+.venv
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.env.*
+!.env.example
+# Comprobantes reales: contienen datos personales
+comprobantes/
