@@ -6,26 +6,45 @@ from pydantic import BaseModel, Field
 
 
 class GeminiReceipt(BaseModel):
-    """Esquema que Gemini debe devolver (salida estructurada)."""
+    """Esquema que Gemini debe devolver (salida estructurada).
+
+    Ningún campo tiene valor por defecto: todos son obligatorios,
+    aunque los Optional admiten null.
+    """
 
     es_comprobante: bool = Field(
         description="true solo si la imagen o PDF es un comprobante de pago o transferencia."
     )
     monto: Optional[float] = Field(
-        default=None,
-        description="Valor transferido o pagado. Solo el número: sin símbolo de moneda ni "
-        "separadores de miles. Decimales con punto.",
+        description="Valor transferido o pagado, no saldos ni comisiones. Solo el número: "
+        "sin símbolo de moneda ni separadores de miles. Decimales con punto. "
+        "null si no se puede leer."
     )
-    moneda: Optional[str] = Field(default=None, description="Código ISO 4217, por ejemplo COP.")
+    moneda: Optional[str] = Field(
+        description="Código ISO 4217. En un comprobante colombiano con '$' y sin otra "
+        "moneda indicada es COP. null si no se puede determinar."
+    )
     fecha: Optional[str] = Field(
-        default=None, description="Fecha de la transacción en formato YYYY-MM-DD."
+        description="Fecha de la transacción en formato YYYY-MM-DD. "
+        "null si no aparece completa o no se puede leer."
     )
     referencia: Optional[str] = Field(
-        default=None,
-        description="Número de referencia, aprobación, comprobante o transacción.",
+        description="Número de referencia, aprobación, comprobante o transacción. "
+        "null si no aparece."
     )
     banco: Optional[str] = Field(
-        default=None, description="Banco o billetera (Bancolombia, Nequi, Daviplata...)."
+        description="Entidad de ORIGEN, desde la que sale el dinero (Nequi, Bancolombia, "
+        "Daviplata...). Se identifica por la app o entidad que generó el comprobante, "
+        "no por el banco del destino. null si no se puede identificar."
+    )
+    cuenta_destino: Optional[str] = Field(
+        description="Número de cuenta, celular o llave (@...) que recibe el dinero. No es "
+        "el nombre del destinatario, la referencia ni la cuenta de origen. "
+        "null si no aparece."
+    )
+    banco_destino: Optional[str] = Field(
+        description="Entidad que recibe el dinero. En un comprobante de Nequi es la del "
+        "campo 'Banco'. null si no aparece."
     )
     confianza: float = Field(
         description="Qué tan seguro estás de la lectura completa, de 0 a 1."
@@ -40,6 +59,9 @@ class ExtractedReceipt(BaseModel):
     fecha: Optional[date] = None
     referencia: Optional[str] = None
     banco: Optional[str] = None
+    destino: Optional[str] = None
+    cuenta_destino: Optional[str] = None
+    banco_destino: Optional[str] = None
     confianza: float = 0.0
     requiere_revision: bool = True
-    advertencias: list[str] = []
+    advertencias: list[str] = Field(default_factory=list)

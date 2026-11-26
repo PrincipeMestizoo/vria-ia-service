@@ -90,3 +90,19 @@ def test_timeout(monkeypatch):
     monkeypatch.setattr(extractor, "GEMINI_TIMEOUT_S", 0.05)
     r = client.post("/extract", headers=H, files={"file": ("a.png", PNG, "image/png")})
     assert r.status_code == 504
+
+
+@pytest.mark.parametrize("account, bank, expected", [
+    (" 00000000000 ", " Bancolombia ", "00000000000 Bancolombia"),
+    ("3000000000", None, "3000000000"),
+    (None, "Bancolombia", None),
+    ("  ", None, None),
+])
+def test_builds_destination(monkeypatch, account, bank, expected):
+    monkeypatch.setattr(extractor, "_call_gemini", fake(GeminiReceipt(
+        es_comprobante=True, banco="Nequi", cuenta_destino=account, banco_destino=bank,
+        confianza=0.95)))
+    r = client.post("/extract", headers=H, files={"file": ("a.png", PNG, "image/png")})
+    body = r.json()
+    assert body["banco"] == "Nequi"
+    assert body["destino"] == expected

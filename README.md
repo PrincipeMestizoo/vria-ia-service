@@ -10,7 +10,8 @@ Funciona con comprobantes de Colombia, como los de Bancolombia, Nequi, Daviplata
 - **Moneda:** por ejemplo, COP.
 - **Fecha:** cuándo se hizo el pago.
 - **Referencia:** el número de aprobación o de comprobante.
-- **Banco:** el banco o la billetera que se usó.
+- **Banco:** el banco o la billetera de origen, desde donde salió el dinero.
+- **Destino:** el número de cuenta que recibe el dinero, seguido de su banco si aparece.
 
 También indica qué tan segura está la IA de lo que leyó (un valor de 0 a 1).
 
@@ -90,6 +91,7 @@ Este es un ejemplo de respuesta, con datos inventados:
   "fecha": "2026-11-20",
   "referencia": "M123456",
   "banco": "Nequi",
+  "destino": "00000000000 Bancolombia",
   "confianza": 0.95,
   "requiere_revision": false,
   "advertencias": []
